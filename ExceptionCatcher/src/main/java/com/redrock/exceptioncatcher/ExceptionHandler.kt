@@ -1,4 +1,4 @@
-package com.redrock.crashdecter
+package com.redrock.exceptioncatcher
 
 /**
  * Author by OkAndGreat

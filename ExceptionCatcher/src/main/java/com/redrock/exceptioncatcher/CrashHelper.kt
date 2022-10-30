@@ -1,13 +1,12 @@
-package com.redrock.crashdecter.Crash
+package com.redrock.exceptioncatcher
 
 import android.content.Context
 import android.os.Build
 import android.os.Looper
-import com.redrock.crashdecter.Crash.ActivityKiller.ActivityKillerV21_V23
-import com.redrock.crashdecter.Crash.ActivityKiller.ActivityKillerV24_V25
-import com.redrock.crashdecter.Crash.ActivityKiller.ActivityKillerV26
-import com.redrock.crashdecter.Crash.ActivityKiller.ActivityKillerV28
-import com.redrock.crashdecter.ExceptionHandler
+import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV21_V23
+import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV24_V25
+import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV26
+import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV28
 import me.weishu.reflection.Reflection
 import kotlin.properties.Delegates
 

@@ -3,9 +3,8 @@ package com.redrock.crashdecter
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import com.jakewharton.processphoenix.ProcessPhoenix
-import com.redrock.crashdecter.Crash.CrashHandler
-import com.redrock.crashdecter.Crash.CrashListener
+import com.redrock.exceptioncatcher.CrashHandler
+import com.redrock.exceptioncatcher.CrashListener
 import me.weishu.reflection.Reflection
 
 
@@ -29,7 +28,7 @@ class myApp : Application() {
 
         CrashHandler.init(this, object : CrashListener {
             override fun againStartApp() {
-                ProcessPhoenix.triggerRebirth(this@myApp);
+                //ProcessPhoenix.triggerRebirth(this@myApp);
             }
 
             override fun recordException(ex: Throwable?) {

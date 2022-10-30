@@ -1,7 +1,7 @@
-package com.redrock.crashdecter.Crash.ActivityKiller
+package com.redrock.exceptioncatcher.ActivityKiller
 
 import android.os.Message
-import com.redrock.crashdecter.Crash.IActivityKiller
+import com.redrock.exceptioncatcher.IActivityKiller
 
 /**
  * Author by OkAndGreat

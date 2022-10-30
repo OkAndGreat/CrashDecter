@@ -1,4 +1,4 @@
-package com.redrock.crashdecter.Crash
+package com.redrock.exceptioncatcher
 
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy

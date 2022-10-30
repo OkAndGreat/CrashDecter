@@ -1,14 +1,14 @@
-package com.redrock.crashdecter.Crash.ActivityKiller
+package com.redrock.exceptioncatcher.ActivityKiller
 
 import android.os.Message
-import com.redrock.crashdecter.Crash.IActivityKiller
+import com.redrock.exceptioncatcher.IActivityKiller
 
 /**
  * Author by OkAndGreat
  * Date on 2022/10/28 22:45.
  *
  */
-class ActivityKillerV26: IActivityKiller {
+class ActivityKillerV28: IActivityKiller {
     override fun finishLaunchActivity(message: Message) {
         TODO("Not yet implemented")
     }

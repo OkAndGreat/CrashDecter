@@ -1,4 +1,4 @@
-package com.redrock.crashdecter.Crash
+package com.redrock.exceptioncatcher
 
 import android.app.Activity
 import java.util.*
