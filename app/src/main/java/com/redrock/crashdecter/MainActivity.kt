@@ -17,9 +17,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        Handler(Looper.getMainLooper()).postDelayed({
-//            ProcessPhoenix.triggerRebirth(this);
-//        }, 1000)
+        Handler(Looper.getMainLooper()).postDelayed({
+            ProcessPhoenix.triggerRebirth(this);
+        }, 1000)
 
         btn.setOnClickListener {
             throw Exception("eee")
