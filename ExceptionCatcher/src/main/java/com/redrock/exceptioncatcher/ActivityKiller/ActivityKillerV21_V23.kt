@@ -5,7 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.IBinder
 import android.os.Message
-import com.redrock.exceptioncatcher.IActivityKiller
+import com.redrock.exceptioncatcher.ActivityKiller.IActivityKiller
 
 /**
  * Author by OkAndGreat

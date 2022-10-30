@@ -1,4 +1,4 @@
-package com.redrock.exceptioncatcher
+package com.redrock.exceptioncatcher.ActivityKiller
 
 import android.os.Message
 

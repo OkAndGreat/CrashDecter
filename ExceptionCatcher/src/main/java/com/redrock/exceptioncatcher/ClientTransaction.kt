@@ -1,4 +1,4 @@
-package com.redrock.exceptioncatcher.ActivityKiller
+package com.redrock.exceptioncatcher
 
 import android.os.IBinder
 

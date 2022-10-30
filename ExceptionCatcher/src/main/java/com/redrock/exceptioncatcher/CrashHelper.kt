@@ -5,10 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV21_V23
-import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV24_V25
-import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV26
-import com.redrock.exceptioncatcher.ActivityKiller.ActivityKillerV28
+import com.redrock.exceptioncatcher.ActivityKiller.*
 import me.weishu.reflection.Reflection
 import kotlin.properties.Delegates
 
