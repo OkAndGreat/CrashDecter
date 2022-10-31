@@ -10,15 +10,15 @@ import android.os.Bundle
  *
  */
 object LifecycleCallback : Application.ActivityLifecycleCallbacks by noOpDelegate() {
-    public fun init(application: Application){
+    fun init(application: Application){
         application.registerActivityLifecycleCallbacks(this)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        ToolAppManager.addActivity(activity)
+        ActivityCrashManager.addActivity(activity)
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        ToolAppManager.removeActivity(activity)
+        ActivityCrashManager.removeActivity(activity)
     }
 }

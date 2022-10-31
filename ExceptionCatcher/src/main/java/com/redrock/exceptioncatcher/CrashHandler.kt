@@ -3,6 +3,7 @@ package com.redrock.exceptioncatcher
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import com.redrock.exceptioncatcher.CrashStrategy.ICrashStrategy
 
 /**
  * Author by OkAndGreat
@@ -11,46 +12,26 @@ import android.content.Context
  */
 @SuppressLint("StaticFieldLeak")
 object CrashHandler : Thread.UncaughtExceptionHandler {
-    const val TAG = "CrashHandler"
 
     private lateinit var mContext: Context
 
-    private var listener: CrashListener? = null
+    private var crashListener: CrashListener? = null
 
-    private var mDefaultHandler: Thread.UncaughtExceptionHandler? = null
+    private lateinit var crashStrategy: ICrashStrategy
 
-    fun init(ctx: Application, listener: CrashListener?) {
+    fun init(ctx: Application, strategy: ICrashStrategy, listener: CrashListener?) {
         LifecycleCallback.init(ctx)
-        CrashHelper.install(ctx)
+        ActivityLifeCycleCrashHandler.install(ctx, listener)
         mContext = ctx
-        this.listener = listener
-        mDefaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        crashListener = listener
+        crashStrategy = strategy
         Thread.setDefaultUncaughtExceptionHandler(this)
     }
 
     override fun uncaughtException(t: Thread, e: Throwable) {
-        var isHandle = handleException(e)
-        listener?.recordException(e)
-
-        if (mDefaultHandler != null && !isHandle) {
-            mDefaultHandler?.uncaughtException(t, e)
-        } else {
-            if (mContext is Application) {
-                listener?.againStartApp()
-            }
-        }
-
-        CrashHelper.setSafe(t, e)
-    }
-
-    private fun handleException(ex: Throwable?): Boolean {
-        if (ex == null) {
-            return false
-        }
-        //收集crash信息
-        ex.localizedMessage ?: return false
-        ex.printStackTrace()
-        return true
+        crashListener?.onExceptionCaught(e)
+        crashStrategy.onExceptionHappened(mContext)
+        ActivityLifeCycleCrashHandler.onExceptionCaught(t, e)
     }
 
 }

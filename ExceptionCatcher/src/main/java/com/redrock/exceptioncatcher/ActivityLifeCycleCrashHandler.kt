@@ -7,24 +7,32 @@ import android.os.Handler
 import android.os.Looper
 import com.redrock.exceptioncatcher.ActivityKiller.*
 import me.weishu.reflection.Reflection
-import kotlin.properties.Delegates
 
 /**
  * Author by OkAndGreat
  * Date on 2022/10/28 22:30.
  *
  */
-object CrashHelper {
-    private var sInstalled = false
+internal object ActivityLifeCycleCrashHandler {
+    private var mInstalled = false
 
-    private lateinit var sActivityKiller: IActivityKiller
+    private lateinit var mActivityKiller: IActivityKiller
 
-    private var sIsSafeMode by Delegates.notNull<Boolean>()
+    private var mCrashListener: CrashListener? = null
 
-    private var sExceptionHandler: ExceptionHandler? = null
+    private var mIsInFakeLoop = false
 
-    fun install(ctx: Context) {
-        if (sInstalled) {
+    //mH中消息类型定义的一些常量
+    private const val LAUNCH_ACTIVITY = 100
+    private const val PAUSE_ACTIVITY = 101
+    private const val PAUSE_ACTIVITY_FINISHING = 102
+    private const val STOP_ACTIVITY_HIDE = 104
+    private const val RESUME_ACTIVITY = 107
+    private const val DESTROY_ACTIVITY = 109
+    private const val EXECUTE_TRANSACTION = 159
+
+    fun install(ctx: Context, listener: CrashListener?) {
+        if (mInstalled) {
             return
         }
         try {
@@ -32,19 +40,20 @@ object CrashHelper {
         } catch (t: Throwable) {
             t.printStackTrace()
         }
-        sInstalled = true
+        mInstalled = true
+        mCrashListener = listener
         initActivityKiller()
     }
 
     private fun initActivityKiller() {
         if (Build.VERSION.SDK_INT >= 28) {
-            sActivityKiller = ActivityKillerV28()
+            mActivityKiller = ActivityKillerV28()
         } else if (Build.VERSION.SDK_INT >= 26) {
-            sActivityKiller = ActivityKillerV26()
+            mActivityKiller = ActivityKillerV26()
         } else if (Build.VERSION.SDK_INT == 25 || Build.VERSION.SDK_INT == 24) {
-            sActivityKiller = ActivityKillerV24_V25()
+            mActivityKiller = ActivityKillerV24_V25()
         } else if (Build.VERSION.SDK_INT <= 23) {
-            sActivityKiller = ActivityKillerV21_V23()
+            mActivityKiller = ActivityKillerV21_V23()
         }
         try {
             hookmH()
@@ -56,14 +65,6 @@ object CrashHelper {
     @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
     @Throws(Exception::class)
     private fun hookmH() {
-        val LAUNCH_ACTIVITY = 100
-        val PAUSE_ACTIVITY = 101
-        val PAUSE_ACTIVITY_FINISHING = 102
-        val STOP_ACTIVITY_HIDE = 104
-        val RESUME_ACTIVITY = 107
-        val DESTROY_ACTIVITY = 109
-        val NEW_INTENT = 112
-        val RELAUNCH_ACTIVITY = 126
         val activityThreadClass = Class.forName("android.app.ActivityThread")
         val activityThread =
             activityThreadClass.getDeclaredMethod("currentActivityThread").invoke(null)
@@ -75,12 +76,11 @@ object CrashHelper {
         callbackField[mhHandler] = Handler.Callback { msg ->
             if (Build.VERSION.SDK_INT >= 28) {
                 //android P 生命周期全部走这
-                val EXECUTE_TRANSACTION = 159
                 if (msg.what == EXECUTE_TRANSACTION) {
                     try {
                         mhHandler.handleMessage(msg)
                     } catch (throwable: Throwable) {
-                        sActivityKiller.finishLaunchActivity(msg)
+                        mActivityKiller.finishLaunchActivity(msg)
                         notifyException(throwable)
                     }
                     return@Callback true
@@ -92,7 +92,7 @@ object CrashHelper {
                     try {
                         mhHandler.handleMessage(msg)
                     } catch (throwable: Throwable) {
-                        sActivityKiller.finishLaunchActivity(msg)
+                        mActivityKiller.finishLaunchActivity(msg)
                         notifyException(throwable)
                     }
                     return@Callback true
@@ -102,7 +102,7 @@ object CrashHelper {
                     try {
                         mhHandler.handleMessage(msg)
                     } catch (throwable: Throwable) {
-                        sActivityKiller.finishResumeActivity(msg)
+                        mActivityKiller.finishResumeActivity(msg)
                         notifyException(throwable)
                     }
                     return@Callback true
@@ -112,7 +112,7 @@ object CrashHelper {
                     try {
                         mhHandler.handleMessage(msg)
                     } catch (throwable: Throwable) {
-                        sActivityKiller.finishPauseActivity(msg)
+                        mActivityKiller.finishPauseActivity(msg)
                         notifyException(throwable)
                     }
                     return@Callback true
@@ -122,7 +122,7 @@ object CrashHelper {
                     try {
                         mhHandler.handleMessage(msg)
                     } catch (throwable: Throwable) {
-                        sActivityKiller.finishPauseActivity(msg)
+                        mActivityKiller.finishPauseActivity(msg)
                         notifyException(throwable)
                     }
                     return@Callback true
@@ -132,7 +132,7 @@ object CrashHelper {
                     try {
                         mhHandler.handleMessage(msg)
                     } catch (throwable: Throwable) {
-                        sActivityKiller.finishStopActivity(msg)
+                        mActivityKiller.finishStopActivity(msg)
                         notifyException(throwable)
                     }
                     return@Callback true
@@ -152,49 +152,44 @@ object CrashHelper {
     }
 
     private fun notifyException(throwable: Throwable) {
-        if (sExceptionHandler == null) {
-            return
-        }
-        if (isSafeMode()) {
-            sExceptionHandler!!.bandageExceptionHappened(throwable)
+        if (isInFakeLoop()) {
+            mCrashListener?.onBandageExceptionCaught(throwable)
         } else {
-            sExceptionHandler!!.uncaughtExceptionHappened(Looper.getMainLooper().thread, throwable)
-            safeMode()
+            enterFakeLoop()
         }
     }
 
-    fun setExceptionHandler(handler: ExceptionHandler) {
-        sExceptionHandler = handler
-    }
 
-    fun setSafe(thread: Thread, ex: Throwable) {
+    fun onExceptionCaught(thread: Thread, ex: Throwable) {
         if (thread === Looper.getMainLooper().thread) {
             isChoreographerException(ex)
-            safeMode()
+            if (!mIsInFakeLoop) {
+                enterFakeLoop()
+            }
         }
     }
 
 
-    fun safeMode() {
-        sIsSafeMode = true
-        sExceptionHandler?.enterSafeMode()
+    private fun enterFakeLoop() {
+        mIsInFakeLoop = true
+        mCrashListener?.onEnterFakeLoop()
 
         while (true) {
             try {
                 Looper.loop()
             } catch (e: Throwable) {
                 isChoreographerException(e)
-                sExceptionHandler?.bandageExceptionHappened(e)
+                mCrashListener?.onBandageExceptionCaught(e)
             }
         }
     }
 
-    fun isSafeMode(): Boolean {
-        return sIsSafeMode
+    fun isInFakeLoop(): Boolean {
+        return mIsInFakeLoop
     }
 
     private fun isChoreographerException(e: Throwable?) {
-        if (e == null || sExceptionHandler == null) {
+        if (e == null) {
             return
         }
         val elements = e.stackTrace ?: return
@@ -204,7 +199,7 @@ object CrashHelper {
             }
             val element = elements[i]
             if ("android.view.Choreographer" == element.className && "Choreographer.java" == element.fileName && "doFrame" == element.methodName) {
-                sExceptionHandler!!.mayBeBlackScreen(e)
+                mCrashListener?.onChoreographerExceptionCaught(e)
                 return
             }
         }

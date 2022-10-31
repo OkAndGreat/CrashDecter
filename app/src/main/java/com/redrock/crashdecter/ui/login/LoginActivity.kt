@@ -15,6 +15,7 @@ import android.widget.Toast
 import com.redrock.crashdecter.databinding.ActivityLoginBinding
 
 import com.redrock.crashdecter.R
+import com.redrock.exceptioncatcher.ActivityCrashManager
 
 class LoginActivity : AppCompatActivity() {
 
@@ -92,8 +93,7 @@ class LoginActivity : AppCompatActivity() {
             }
 
             login.setOnClickListener {
-                loading.visibility = View.VISIBLE
-                loginViewModel.login(username.text.toString(), password.text.toString())
+                throw Exception()
             }
         }
     }
